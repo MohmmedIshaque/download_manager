@@ -1,6 +1,4 @@
-/*The purpose of this program is create a daemon process.I will use fork to create ano 
- *ther process and then end the original process. Before we ends the parent, process we need to make the child process leader ofthe 
- */
+/*The purpose of this program is create a daemon process.I will use fork to create another process and then end the original process. Before we ends the parent, process we need to make the child process leader ofthe */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,8 +14,6 @@
 #define _GNU_SOURCE
 int main(){
     pid_t sid = 0;
-	printf("My id is %d and my parent's Process id is %d.\n",getpid(),getppid());
-
 	pid_t child = fork();
 	
 	if(child > 0){
@@ -26,6 +22,7 @@ int main(){
 	}
 	else if(child < 0){
 		perror("Download Manager failed.\n");
+		exit(EXIT_FAILURE);
 	}
 	else{	
   			umask(0);
@@ -40,17 +37,16 @@ int main(){
 				exit(EXIT_FAILURE);
 			}
 
+			printf("My id is %d and my parent's Process id is %d.\n",getpid(),getppid());
 			close(STDIN_FILENO);
 			close(STDOUT_FILENO);
 			close(STDERR_FILENO);
 
 			//Daemon is created by the above codes. The following codes should read from the incoming TCP connection and do appropriate procedure.
-
-			while(1){
-				int server_sock = socket(AF_UNIX,SOCK_STREAM,0);
+				int server_sock = socket(AF_UNIX, SOCK_STREAM, 0);
 				if(server_sock==-1){
 					perror("The file can not be downloaded.\n");
-					continue;
+					exit(EXIT_FAILURE);
 				}
 
 				struct sockaddr_in  server_addr;
@@ -61,13 +57,13 @@ int main(){
 				int is_sock_bind = bind(server_sock,(struct sockaddr*)&(server_addr.sin_addr), sizeof(struct sockaddr_un));
 				if(is_sock_bind == -1){
 					perror("The file can not be downloaded.\n");
-					continue;
+					exit(EXIT_FAILURE);
 				}
 
 				int can_listen = listen(server_sock,128);
 				if(can_listen == -1){
 					perror("The file can not be downloaded.\n");
-					continue;
+					exit(EXIT_FAILURE);
 				}
 
 				struct sockaddr *incoming = NULL;
@@ -76,11 +72,18 @@ int main(){
 
 				if(is_accepted < 0){
 					perror("The file can not be downloaded.\n");
-					continue;
+					exit(EXIT_FAILURE);
 				}
 
-			}
-		}
+			   while(is_accepted){
+
+			   		//at the end
+					is_accepted = accept(server_sock, incoming, &addr_len);			
+			   }//while ends
+
+
+			}//else-ends
+		
 	
 	return 0;
-}
+}//main ends
